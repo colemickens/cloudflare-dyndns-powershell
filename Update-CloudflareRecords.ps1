@@ -1,12 +1,13 @@
 ﻿param(
     [string[]] $records = @(subdomain.domain.com),
     [string] $email = "you@domain.com",
-    [string] $key = "abcdefghijklmnop123456789"
+    [string] $key = "abcdefghijklmnop123456789",
+    [string] $newTtl = "120"
 )
 
 $authHeaders = @{ "X-Auth-Email" = $email; "X-Auth-Key" = $key }
 
-$newIp = (Resolve-DnsName -Name "o-o.myaddr.l.google.com." -Type TXT).Strings[0]
+$newIp = (ConvertFrom-Json (Invoke-WebRequest -Method Get -Uri "https://api.ipify.org?format=json").Content).ip
 
 $zoneResponseRaw = Invoke-WebRequest -Method Get -Uri "https://api.cloudflare.com/client/v4/zones" -Headers  $authHeaders
 $zoneResponse = ConvertFrom-Json ($zoneResponseRaw).Content
@@ -39,6 +40,7 @@ $zoneResponse.result | % {
                             "type" = $_.type;
                             "name" = $_.name;
                             "content" = $newIp;
+                            "ttl" = $newTtl;
                         })
             } catch {
                 $exceptionStream = $_.Exception.Response.GetResponseStream()
