@@ -1,12 +1,13 @@
 ﻿param(
-    [string[]] $records = @(),
-    [string] $email = "",
-    [string] $key = ""
+    [string[]] $records = @(subdomain.domain.com),
+    [string] $email = "you@domain.com",
+    [string] $key = "abcdefghijklmnop123456789",
+    [string] $newTtl = "120"
 )
 
 $authHeaders = @{ "X-Auth-Email" = $email; "X-Auth-Key" = $key }
 
-$newIp = (Resolve-DnsName -Name "o-o.myaddr.l.google.com." -Type TXT).Strings[0]
+$newIp = (ConvertFrom-Json (Invoke-WebRequest -Method Get -Uri "https://api.ipify.org?format=json").Content).ip
 
 $zoneResponseRaw = Invoke-WebRequest -Method Get -Uri "https://api.cloudflare.com/client/v4/zones" -Headers  $authHeaders
 $zoneResponse = ConvertFrom-Json ($zoneResponseRaw).Content
@@ -20,12 +21,12 @@ $zoneResponse.result | % {
 
     $recordResponse.result | % {
         $recordId = $_.id
-        if ($records -NotContains $_.content)
+        if ($records -NotContains $_.name)
         {
             New-Object psobject -Property @{ "name" = $_.name; "response" = $_.content; "action" = "skipped" }
             $action = "skipped"
         }
-        elseif ( ($records -Contains $_.content) -and ($_.Type -eq "A") )
+        elseif ( ($records -Contains $_.name) -and ($_.Type -eq "A") )
         {
             $updateHeaders = $authHeaders.Clone()
             $updateHeaders += @{"Content-Type" = "application/json"}
@@ -39,6 +40,7 @@ $zoneResponse.result | % {
                             "type" = $_.type;
                             "name" = $_.name;
                             "content" = $newIp;
+                            "ttl" = $newTtl;
                         })
             } catch {
                 $exceptionStream = $_.Exception.Response.GetResponseStream()
