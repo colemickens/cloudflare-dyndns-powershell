@@ -1,7 +1,7 @@
 param(
     [string[]] $records = @("<Your FQDN with Cloudflare>"),
     [string] $email = "<Your Cloudflare logon>",
-    [string] $key = "<Your Cloudflare API key",
+    [string] $key = "<Your Cloudflare API key>",
     [string] $newTtl = "120"
 )
 
