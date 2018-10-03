@@ -42,7 +42,7 @@ $zoneResponse.result | % {
                             "type" = $_.type;
                             "name" = $_.name;
                             "content" = $newIp;
-			    "ttl" = $newTtl;
+                            "ttl" = $newTtl;
                         })
             } catch {
                 $exceptionStream = $_.Exception.Response.GetResponseStream()
