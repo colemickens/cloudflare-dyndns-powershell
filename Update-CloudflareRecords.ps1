@@ -9,15 +9,15 @@ param(
 
 $authHeaders = @{ "X-Auth-Email" = $email; "X-Auth-Key" = $key }
 
-$newIp = (ConvertFrom-Json (Invoke-WebRequest -Method Get -Uri "https://api.ipify.org?format=json").Content).ip
+$newIp = (ConvertFrom-Json (Invoke-WebRequest -UseBasicParsing -Method Get -Uri "https://api.ipify.org?format=json").Content).ip
 
-$zoneResponseRaw = Invoke-WebRequest -Method Get -Uri "https://api.cloudflare.com/client/v4/zones" -Headers  $authHeaders
+$zoneResponseRaw = Invoke-WebRequest -UseBasicParsing -Method Get -Uri "https://api.cloudflare.com/client/v4/zones" -Headers $authHeaders
 $zoneResponse = ConvertFrom-Json ($zoneResponseRaw).Content
 
 $zoneResponse.result | % {
     $zoneId = $_.id
 
-    $recordResponse = ConvertFrom-Json (Invoke-WebRequest `
+    $recordResponse = ConvertFrom-Json (Invoke-WebRequest -UseBasicParsing `
         -Uri "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records" `
         -Method Get -Headers  $authHeaders)
 
@@ -33,7 +33,7 @@ $zoneResponse.result | % {
             $updateHeaders = $authHeaders.Clone()
             $updateHeaders += @{"Content-Type" = "application/json"}
             try {
-                $updateResponseRaw = Invoke-WebRequest `
+                $updateResponseRaw = Invoke-WebRequest -UseBasicParsing `
                     -Uri "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records/$recordId" `
                     -Method Put -Headers  $updateHeaders `
                     -Body (ConvertTo-Json `
